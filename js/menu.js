@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <ul class="contact-menu__list">
             <li>
                 <a href="https://www.tiktok.com/@wkifwa?lang=en" target="_blank" title="tiktok" class="contact-menu__link">
-                    <img src="../img/img.png" alt="Bato Web Agency - Website">
+                    <img src="./img/img.png" alt="Bato Web Agency - Website">
                 </a>
             </li>
             
