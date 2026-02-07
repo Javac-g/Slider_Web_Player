@@ -1,35 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
 	const slider = document.querySelector(".video-slider");
+
 	if (!slider) return;
 
 	let isScrolling = false;
-	let soundUnlocked = false;
 
-	/* ===============================
-	   SOUND UNLOCK (browser-safe)
-	================================ */
-
-	function unlockSound() {
-		if (soundUnlocked) return;
-
-		document.querySelectorAll(".video-slider__video").forEach(video => {
-			video.muted = false;
-		});
-
-		soundUnlocked = true;
-
-		document.removeEventListener("click", unlockSound);
-		document.removeEventListener("touchstart", unlockSound);
-		document.removeEventListener("keydown", unlockSound);
-	}
-
-	document.addEventListener("click", unlockSound);
-	document.addEventListener("touchstart", unlockSound);
-	document.addEventListener("keydown", unlockSound);
-
-	/* ===============================
-	   SWIPER INIT
-	================================ */
+	// Slider Functionality
 
 	const swiper = new Swiper(slider, {
 		slidesPerView: "auto",
@@ -38,99 +14,91 @@ document.addEventListener("DOMContentLoaded", () => {
 		speed: 1000,
 		allowTouchMove: true,
 		on: {
-			init() {
+			init: function () {
 				updateVideos(this);
 			},
-			slideChange() {
+			slideChange: function () {
 				updateVideos(this);
 			}
 		},
-		breakpoints: {
-			575: {
-				spaceBetween: 90
-			}
-		}
+		breakpoints: { 575: { spaceBetween: 90 } }
 	});
 
-	/* ===============================
-	   VIDEO CONTROL
-	================================ */
+	// Video Update
 
 	function updateVideos(swiper) {
-		swiper.slides.forEach((slide, index) => {
-			const video = slide.querySelector("video");
-			if (!video) return;
+		const slides = swiper.slides;
 
-			const isActive = index === swiper.activeIndex;
-			const isReady = video.readyState >= 3;
+		if (slides && slides.length) {
+			slides.forEach((slide, index) => {
+				const video = slide.querySelector("video");
 
-			if (isActive) {
-				const playVideo = () => {
-					video.muted = !soundUnlocked;
-					video.currentTime = 0;
-					video.play().catch(() => {});
+				if (!video) return;
 
-					video.onended = () => {
-						video.currentTime = 0;
-						video.play().catch(() => {});
+				const isReady = video.readyState >= 3;
+
+				if (index === swiper.activeIndex) {
+					const playVideo = () => {
+						if (video.paused) video.play();
+
+						video.onended = () => {
+							video.currentTime = 0;
+							video.play();
+						};
 					};
-				};
 
-				if (isReady) {
-					setTimeout(playVideo, 250);
-				} else {
-					video.addEventListener(
-						"canplay",
-						function handler() {
+					if (isReady) {
+						setTimeout(playVideo, 250);
+					} else {
+						video.addEventListener("canplay", function handler() {
 							video.removeEventListener("canplay", handler);
 							setTimeout(playVideo, 250);
-						},
-						{ once: true }
-					);
+						});
+					}
+				} else {
+					if (!video.paused && isReady) {
+						video.pause();
+					}
 				}
-			} else {
-				video.pause();
-			}
-		});
+			});
+		}
 	}
 
-	/* ===============================
-	   HORIZONTAL WHEEL NAVIGATION
-	================================ */
+	// Horizontal Scroll Functionality
 
 	slider.addEventListener(
 		"wheel",
 		(event) => {
-			const isHorizontal = Math.abs(event.deltaX) > Math.abs(event.deltaY);
-			if (!isHorizontal) return;
+			const isHorizontalScroll = Math.abs(event.deltaX) > Math.abs(event.deltaY);
+
+			if (!isHorizontalScroll) return;
 
 			event.preventDefault();
+
 			if (isScrolling || Math.abs(event.deltaX) < 30) return;
 
 			isScrolling = true;
 
-			if (event.deltaX > 0) {
-				swiper.activeIndex === swiper.slides.length - 1
-					? swiper.slideTo(0)
-					: swiper.slideNext();
+			if (event.deltaX > 0 && swiper) {
+				if (swiper.activeIndex === swiper.slides.length - 1) {
+					swiper.slideTo(0);
+				} else {
+					swiper.slideNext();
+				}
 			} else {
-				swiper.activeIndex === 0
-					? swiper.slideTo(swiper.slides.length - 1)
-					: swiper.slidePrev();
+				if (swiper.activeIndex === 0) {
+					swiper.slideTo(swiper.slides.length - 1);
+				} else {
+					swiper.slidePrev();
+				}
 			}
 
-			setTimeout(() => {
-				isScrolling = false;
-			}, swiper.params.speed + 100);
+			setTimeout(() => (isScrolling = false), swiper.params.speed + 100);
 		},
 		{ passive: false }
 	);
 
-	/* ===============================
-	   RESIZE FIX
-	================================ */
-
 	window.addEventListener("resize", () => {
-		swiper.update();
+		if (swiper) swiper.update();
 	});
 });
