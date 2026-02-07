@@ -10,8 +10,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <label tabindex="0" role="button" for="contact-menu-trigger" class="contact-menu__toggle">
             <div class="contact-menu__trigger">
-                <img src="../img/contact.svg" alt="contact.svg">
-                <img src="../img/close.svg" alt="close.svg">
+                <img src="./img/contact.svg" alt="contact.svg">
+                <img src="./img/close.svg" alt="close.svg">
             </div>
 
             <div class="contact-menu__label">Contact Us</div>
