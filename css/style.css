@@ -228,3 +228,58 @@
 .video-slider__media-notice[hidden] {
     display: none;
 }
+
+/* Transparent fullscreen action, available only on the active video. */
+.video-slider__media-button--fullscreen {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.14);
+    color: white;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.video-slider__media-button--fullscreen:hover,
+.video-slider__media-button--fullscreen:focus-visible {
+    background: rgba(0, 0, 0, 0.52);
+    border-color: rgba(255, 255, 255, 0.72);
+}
+
+.video-slider__media-button--fullscreen svg {
+    width: 21px;
+    height: 21px;
+    display: block;
+    pointer-events: none;
+}
+
+/* Desktop/Android: enlarge the whole media box, retaining its controls. */
+.video-slider__video-box:fullscreen,
+.video-slider__video-box:-webkit-full-screen {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    border-radius: 0;
+    background: #000;
+    filter: none !important;
+    transform: none !important;
+}
+
+.video-slider__video-box:fullscreen video,
+.video-slider__video-box:-webkit-full-screen video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transform: none !important;
+}
+
+.video-slider__video-box::backdrop {
+    background: #000;
+}
