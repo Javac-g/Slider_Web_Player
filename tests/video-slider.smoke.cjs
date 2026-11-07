@@ -51,24 +51,30 @@ assert.equal(videos[0].muted,false,'tap enables sound');
 assert.equal(sound.textContent,'Mute');
 Swiper.current.slideTo(1);
 assert.equal(videos[1].plays,1,'swipe plays second video');
-assert.equal(videos[1].muted,true,'next video starts muted');
+assert.equal(videos[1].muted,false,'explicit sound opt-in should persist when allowed');
 assert.equal(videos[0].paused,true);
 assert.equal(videos[0].muted,true,'prior video remuted');
 assert.deepEqual(videos.map(v=>v.hasAttribute('src')),[true,true,true,false,false]);
+videos[4].play=function(){this.plays++;return this.muted?Promise.resolve():Promise.reject({name:'NotAllowedError',message:'Sound autoplay blocked'})};
 Swiper.current.slideTo(4);
 assert.equal(videos[4].plays,1);
 assert.deepEqual(videos.map(v=>v.hasAttribute('src')),[false,false,false,true,true]);
 assert.equal(errors.length,0);
-// Rejected autoplay must expose a visible, tap-based fallback rather than fail silently.
-videos[3].play=function(){this.plays++;return Promise.reject({name:'NotAllowedError',message:'Autoplay blocked'})};
-Swiper.current.slideTo(3);
+// iOS-style audible-autoplay rejection should retry silently, still muted.
 setImmediate(()=>{
-  assert.equal(retry.hidden,false,'a manual play action should be shown');
-  assert.equal(notice.hidden,false,'playback failure notice should be visible');
-  // Actual media failures should be reported without removing the archive entry.
-  videos[3].error={code:4};
-  for (const handler of (videos[3].listeners.error||[])) handler();
-  assert.equal(sound.disabled,true,'sound should not be enabled for an invalid media source');
-  assert.equal(notice.textContent,'Video unavailable');
-  console.log('PASS: muted autoplay, slide changes, audio interaction, lazy-loading, unavailable-media and playback-error fallback checks');
+  assert.equal(videos[4].muted,true,'blocked audible autoplay should fall back to muted');
+  assert.equal(videos[4].plays,2,'muted fallback should retry playback');
+  // Rejected muted autoplay must expose a tap-based fallback.
+  videos[3].play=function(){this.plays++;return Promise.reject({name:'NotAllowedError',message:'Autoplay blocked'})};
+  Swiper.current.slideTo(3);
+  setImmediate(()=>{
+    assert.equal(retry.hidden,false,'a manual play action should be shown');
+    assert.equal(notice.hidden,false,'playback failure notice should be visible');
+    // Media errors should be reported without removing the archive entry.
+    videos[3].error={code:4};
+    for (const handler of (videos[3].listeners.error||[])) handler();
+    assert.equal(sound.disabled,true,'sound should not be enabled for an invalid media source');
+    assert.equal(notice.textContent,'Video unavailable');
+    console.log('PASS: initial muted autoplay, persistent opt-in audio, iOS muted fallback, lazy-loading, unavailable-media and playback-error fallback checks');
+  });
 });
