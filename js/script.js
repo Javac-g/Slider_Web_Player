@@ -131,15 +131,20 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // Standard fullscreen keeps our transparent controls inside the enlarged box.
-        if (typeof box.requestFullscreen === "function" && document.fullscreenEnabled !== false) {
-            invoke(() => box.requestFullscreen());
-        } else if (typeof video.webkitEnterFullscreen === "function") {
-            // iPhone Safari/Chrome: only the video may open in native fullscreen.
-            // Call synchronously inside this button click (a user gesture).
+        const supportsElementFullscreen = document.fullscreenEnabled === true ||
+            document.webkitFullscreenEnabled === true;
+
+        // iPhone Safari/Chrome can expose the video-only WebKit fullscreen API
+        // even when standard element fullscreen is unavailable.
+        if (!supportsElementFullscreen && typeof video.webkitEnterFullscreen === "function") {
             invoke(() => video.webkitEnterFullscreen());
+        } else if (typeof box.requestFullscreen === "function") {
+            // Standard fullscreen includes the transparent controls on Android/desktop.
+            invoke(() => box.requestFullscreen());
         } else if (typeof box.webkitRequestFullscreen === "function") {
             invoke(() => box.webkitRequestFullscreen());
+        } else if (typeof video.webkitEnterFullscreen === "function") {
+            invoke(() => video.webkitEnterFullscreen());
         } else {
             setNotice("Fullscreen is not supported in this browser");
         }
