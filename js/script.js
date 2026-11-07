@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const videos = Array.from(slider.querySelectorAll(".video-slider__video"));
     let activeVideo = null;
+    let prefersSound = false;
     let playbackRequest = 0;
     let isScrolling = false;
 
@@ -98,6 +99,15 @@ document.addEventListener("DOMContentLoaded", () => {
             // Switching slides can legitimately interrupt a previous play() call.
             if (video !== activeVideo || request !== playbackRequest || error.name === "AbortError") return;
 
+            // Preserve audio after opt-in where permitted (e.g. desktop), but
+            // transparently fall back to muted autoplay on restrictive browsers.
+            if (error.name === "NotAllowedError" && !video.muted) {
+                video.muted = true;
+                updateSoundButton();
+                playVideo(video, request);
+                return;
+            }
+
             console.error("Video playback failed:", video.dataset.src, error.name, error.message);
             if (error.name === "NotAllowedError") {
                 setNotice("Tap Play video to start");
@@ -142,6 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!nextVideo) return;
         const videoBox = activeSlide.querySelector(".video-slider__video-box");
         if (videoBox) videoBox.appendChild(controls);
+        nextVideo.muted = !prefersSound;
         updateSoundButton();
 
         if (!nextVideo.dataset.src) {
@@ -160,6 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
     soundButton.addEventListener("click", () => {
         if (!activeVideo) return;
         const enableSound = activeVideo.muted;
+        prefersSound = enableSound;
         activeVideo.muted = !enableSound;
         updateSoundButton();
 
@@ -175,6 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (video !== activeVideo || request !== playbackRequest) return;
                     console.error("Sound playback failed:", video.dataset.src, error.name, error.message);
                     video.muted = true;
+                    prefersSound = false;
                     updateSoundButton();
                     retryButton.hidden = false;
                     setNotice("Tap Play video to start");
